@@ -1,16 +1,19 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const blogSchema = new mongoose.Schema({
+  title: String,
+  content: String,
   author: String,
-  contentOriginal: String,
-  originalLanguage: String,
-  contentTranslated: {
-    en: String,
-    hi: String,
-    es: String,
-    fr: String,
-    ja: String
+  language: String,
+  createdAt: {
+    type: Date,
+    default: Date.now
   },
-}, { timestamps: true });
+  reactions: {
+    fire: { type: Number, default: 0 },
+    heart: { type: Number, default: 0 },
+    laugh: { type: Number, default: 0 }
+  }
+});
 
-module.exports = mongoose.model('Blog', blogSchema);
+module.exports = mongoose.model("Blog", blogSchema);

@@ -1,30 +1,33 @@
-const express = require("express");
-const cors = require("cors"); // ✅ only once!
-const dotenv = require("dotenv");
-const mongoose = require("mongoose");
-const blogRoutes = require("./routes/blogRoutes");
+const express = require('express');
+//const cors = require('cors');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
+const blogRoutes = require('./routes/blogRoutes');
 
-dotenv.config();
 const app = express();
-
+const cors = require('cors');
 app.use(cors({
-  origin: "http://localhost:3000",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"],
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json());
-app.use("/api/blogs", blogRoutes);
+app.options('*', cors());
 
-
-// ✅ Connect Mongo
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log('✅ MongoDB connected');
-  app.listen(5000, () => console.log('🚀 Server running on port 5000'));
-}).catch((err) => {
-  console.error('❌ MongoDB error:', err);
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
 });
+
+
+app.use(express.json());
+app.use('/api/blogs', blogRoutes);
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+const PORT = process.env.PORT || 5050;
+app.listen(PORT, () => console.log(`💻 Server running on port ${PORT}`));

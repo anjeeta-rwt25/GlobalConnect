@@ -1,43 +1,61 @@
-const express = require('express');
-const router = express.Router();  // ✅ This line was missing!
+const express = require("express");
+const router = express.Router();
+const Blog = require("../models/Blog");
+const translateText = require("../services/translate");
 
-const Blog = require('../models/Blog');
-const translateText = require('../services/translate');
-
-// now you can use router.post()
-router.post('/', async (req, res) => {
-  const { author, content } = req.body;
-  console.log('📩 Received Blog:', { author, content });
-
-  if (!author || !content) {
-    return res.status(400).json({ error: 'Author and content required' });
-  }
-
+// Create a new blog
+router.post("/", async (req, res) => {
   try {
-    const translated = {
-      en: content,
-      hi: await translateText(content, 'hi'),
-      es: await translateText(content, 'es'),
-      fr: await translateText(content, 'fr'),
-      ja: await translateText(content, 'ja'),
-    };
+    const { title, content, language, author, userId } = req.body;
+    const translated = await translateText(content, language);
 
-    const blog = new Blog({ author, content, translated });
-    const saved = await blog.save();
-    console.log('✅ Blog Saved:', saved);
-    res.status(201).json(saved);
+    const newBlog = new Blog({
+      title,
+      content: translated,
+      author,
+      language,
+      userId
+    });
+
+    await newBlog.save();
+    res.status(201).json({ message: "✅ Blog saved and translated", blog: newBlog });
   } catch (err) {
-    console.error('❌ Blog Save Error:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Blog submission error:", err);
+    res.status(500).json({ message: "❌ Blog submission failed" });
   }
 });
 
+// Get all blogs
 router.get('/', async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.status(200).json(blogs);
+    res.json(blogs);
   } catch (err) {
-    res.status(500).json({ error: 'Unable to fetch blogs' });
+    console.error("Fetch error:", err);
+    res.status(500).json({ message: "❌ Error fetching blogs" });
+  }
+});
+
+// React to a blog
+router.post("/:id/react", async (req, res) => {
+  try {
+    const { type } = req.body;
+    const validTypes = ["fire", "heart", "laugh"];
+
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ message: "Invalid reaction type" });
+    }
+
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+    blog.reactions[type] += 1;
+    await blog.save();
+
+    res.json({ message: "Reaction updated", reactions: blog.reactions });
+  } catch (err) {
+    console.error("Reaction error:", err);
+    res.status(500).json({ message: "Failed to react" });
   }
 });
 

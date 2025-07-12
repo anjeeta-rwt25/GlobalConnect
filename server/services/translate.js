@@ -1,19 +1,20 @@
-const axios = require('axios');
+const axios = require("axios");
 
 const translateText = async (text, targetLang) => {
   try {
-    const res = await axios.post('https://libretranslate.de/translate', {
+    const response = await axios.post("https://libretranslate.de/translate", {
       q: text,
-      source: 'en',
+      source: "auto",
       target: targetLang,
-      format: 'text'
+      format: "text",
     }, {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { "Content-Type": "application/json" },
     });
-    return res.data.translatedText;
-  } catch (err) {
-    console.error(`❌ Translation error to ${targetLang}:`, err);
-    return text; // fallback to original
+
+    return response.data.translatedText;
+  } catch (error) {
+    console.error("Translation failed:", error.message);
+    return text;
   }
 };
 
