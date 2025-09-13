@@ -1,13 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const Blog = require("../models/Blog");
-const translateText = require("../services/translate");
+// const translateText = require("../services/translate"); // temporarily bypassed
 
 // Create a new blog
 router.post("/", async (req, res) => {
   try {
+    console.log("📥 Incoming blog data:", req.body);
+
     const { title, content, language, author, userId } = req.body;
-    const translated = await translateText(content, language);
+
+    // For debugging: skip translation
+    const translated = content;
 
     const newBlog = new Blog({
       title,
@@ -18,10 +22,11 @@ router.post("/", async (req, res) => {
     });
 
     await newBlog.save();
-    res.status(201).json({ message: "✅ Blog saved and translated", blog: newBlog });
+    console.log("✅ Blog saved:", newBlog);
+    res.status(201).json({ message: "✅ Blog saved", blog: newBlog });
   } catch (err) {
-    console.error("Blog submission error:", err);
-    res.status(500).json({ message: "❌ Blog submission failed" });
+    console.error("🔥 Blog submission error:", err);
+    res.status(500).json({ message: "❌ Blog submission failed", error: err.message });
   }
 });
 
